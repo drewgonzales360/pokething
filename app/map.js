@@ -8,6 +8,98 @@ const TILE_SIZE   = 50;
 const VIEW_WIDTH  = 16;
 const VIEW_HEIGHT = 12;
 
+
+module.exports = {
+  // Generates a map. There will be black sections where you can't walk
+  // and black sections on ever border. Each map will be whatever section
+  // of the world that gets loaded.
+  generateMap: function(width, height) {
+    width += VIEW_WIDTH;
+    height += VIEW_HEIGHT;
+    var map = []
+    for (var x = 0; x < width; x++) {
+      var col = [];
+      for(var y = 0; y < height; y++){
+        if( x < VIEW_WIDTH/2 || x >= width - VIEW_WIDTH/2 ||
+            y < VIEW_HEIGHT/2 || y >= height - VIEW_HEIGHT/2){
+          col.push(-1); // initilize boreders to black.
+        } else {
+          col.push(1)// initialze the map to walkable grass.
+        }
+      }
+      map.push(col);
+    }
+    return map
+  },
+
+
+  // This function will put a building or something on the
+  // map where the player can't move to.
+  // loc_x and loc_y are map coordinates, not mat
+  // TODO: Add out of bounds logic.
+  insertObstruction: function(map, loc_x, loc_y, width, height) {
+    loc_x += VIEW_WIDTH/2;
+    loc_y += VIEW_HEIGHT/2;
+    for(var x = loc_x; x < width + loc_x; x++){
+      for( var y = loc_y; y < height + loc_y; y++){
+        map[x][y] = -1 // code for not walkable.
+      }
+    }
+    return map
+  },
+
+  initMap: function(townMap, mapX, mapY){
+    drawViewport(townMap, mapX, mapY);
+    drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
+
+    var matX = mapX + VIEW_WIDTH/2  // don't touch
+    var matY = mapY + VIEW_HEIGHT/2 // don't touch
+
+    key.pressed.on("w", function(key_event) {
+      if( townMap[matX][matY-1] == 1){
+        mapY -= 1;
+        matY -= 1
+      }
+      drawViewport(townMap, mapX, mapY);
+      drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
+      console.log("Direction");
+    });
+
+    key.pressed.on("s", function(key_event) {
+      if( townMap[matX][matY+1] == 1){
+        mapY += 1
+        matY += 1
+      }
+      drawViewport(townMap, mapX, mapY);
+      drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
+      console.log("Direction");
+    });
+
+    key.pressed.on("a", function(key_event) {
+      if( townMap[matX-1][matY] == 1){
+        mapX -= 1;
+        matX -= 1
+      }
+      drawViewport(townMap, mapX, mapY);
+      drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
+      console.log("Direction");
+    });
+
+    key.pressed.on("d", function(key_event) {
+      if( townMap[matX+1][matY] == 1){
+        mapX += 1;
+        matX += 1;
+      }
+      drawViewport(townMap, mapX, mapY);
+      drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
+      console.log("Direction");
+    });
+  }
+}
+
+
+
+
 // used to draw a tile on the viewport
 function drawTile( view_x, view_y, fillStyle ) {
   if( view_x > VIEW_WIDTH || view_y > VIEW_HEIGHT){
@@ -20,71 +112,23 @@ function drawTile( view_x, view_y, fillStyle ) {
   }
   switch(fillStyle) {
     case "player":
-      ctx.fillStyle = "bisque"
-      break;
+    ctx.fillStyle = "bisque"
+    break;
     case 1:
-        ctx.fillStyle = "green"
-        break;
+    ctx.fillStyle = "green"
+    break;
     case 0:
-        ctx.fillStyle = "blue"
-        break;
+    ctx.fillStyle = "blue"
+    break;
     case -1:
-        ctx.fillStyle = "black"
-        break;
+    ctx.fillStyle = "black"
+    break;
     default:
-        ctx.fillStyle = "red"
-        break;
+    ctx.fillStyle = "red"
+    break;
   }
   ctx.fillRect( view_x*TILE_SIZE, view_y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
 }
-
-
-// Generates a map. There will be black sections where you can't walk
-// and black sections on ever border. Each map will be whatever section
-// of the world that gets loaded.
-function generateMap(width, height) {
-  width += VIEW_WIDTH;
-  height += VIEW_HEIGHT;
-  var map = []
-  for (var x = 0; x < width; x++) {
-    var col = [];
-    for(var y = 0; y < height; y++){
-      if( x < VIEW_WIDTH/2 || x >= width - VIEW_WIDTH/2 ||
-          y < VIEW_HEIGHT/2 || y >= height - VIEW_HEIGHT/2){
-        col.push(-1); // initilize boreders to black.
-      } else {
-        col.push(1)// initialze the map to walkable grass.
-      }
-    }
-    map.push(col);
-  }
-  return map
-}
-// Give this function matrix locations
-function inBounds(map, loc_x, loc_y) {
-  if( loc_x < VIEW_WIDTH/2 || loc_x > map.length-(VIEW_WIDTH/2) ||
-        loc_y < VIEW_HEIGHT || loc_y > map[0].length-(VIEW_HEIGHT/2)){
-          return false;
-        }
-  return true;
-}
-
-// This function will put a building or something on the
-// map where the player can't move to.
-// loc_x and loc_y are map coordinates, not mat
-// TODO: Add out of bounds logic.
-function insertObstruction(map, loc_x, loc_y, width, height) {
-  loc_x += VIEW_WIDTH/2;
-  loc_y += VIEW_HEIGHT/2;
-  for(var x = loc_x; x < width + loc_x; x++){
-    for( var y = loc_y; y < height + loc_y; y++){
-      map[x][y] = -1 // code for not walkable.
-    }
-  }
-  return map
-
-}
-
 
 // Going to need to be called hella.
 // loc_x and loc_y have to be the center
@@ -98,55 +142,3 @@ function drawViewport(map, map_x, map_y) {
     }
   }
 }
-
-
-var mapX = 0;
-var mapY = 0;
-var matX = mapX + VIEW_WIDTH/2  // don't touch
-var matY = mapY + VIEW_HEIGHT/2 // don't touch
-
-key.pressed.on("w", function(key_event) {
-  if( SproulTown[matX][matY-1] == 1){
-    mapY -= 1;
-    matY -= 1
-  }
-  drawViewport(SproulTown, mapX, mapY);
-  drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
-  console.log("Direction");
-});
-
-key.pressed.on("s", function(key_event) {
-  if( SproulTown[matX][matY+1] == 1){
-    mapY += 1
-    matY += 1
-  }
-  drawViewport(SproulTown, mapX, mapY);
-  drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
-  console.log("Direction");
-});
-
-key.pressed.on("a", function(key_event) {
-  if( SproulTown[matX-1][matY] == 1){
-    mapX -= 1;
-    matX -= 1
-  }
-  drawViewport(SproulTown, mapX, mapY);
-  drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
-  console.log("Direction");
-});
-
-key.pressed.on("d", function(key_event) {
-  if( SproulTown[matX+1][matY] == 1){
-    mapX += 1;
-    matX += 1;
-  }
-  drawViewport(SproulTown, mapX, mapY);
-  drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
-  console.log("Direction");
-});
-
-
-var SproulTown = generateMap(7,7)
-insertObstruction(SproulTown, 1,1,1,1)
-drawViewport(SproulTown, 0, 0);
-drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
