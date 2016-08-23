@@ -1,12 +1,12 @@
 const canvas = document.getElementById("map");
 const ctx = canvas.getContext("2d");
+const key = require('key-emit')(document);
 ctx.canvas.width  = window.innerWidth;
 ctx.canvas.height = window.innerHeight;
 
-
-const TILE_SIZE   = 50
-const VIEW_WIDTH  = 16
-const VIEW_HEIGHT = 12
+const TILE_SIZE   = 50;
+const VIEW_WIDTH  = 16;
+const VIEW_HEIGHT = 12;
 
 // used to draw a tile on the viewport
 function drawTile( view_x, view_y, fillStyle ) {
@@ -19,73 +19,134 @@ function drawTile( view_x, view_y, fillStyle ) {
     return;
   }
   switch(fillStyle) {
+    case "player":
+      ctx.fillStyle = "bisque"
+      break;
     case 1:
         ctx.fillStyle = "green"
         break;
     case 0:
         ctx.fillStyle = "blue"
         break;
-    default:
+    case -1:
         ctx.fillStyle = "black"
+        break;
+    default:
+        ctx.fillStyle = "red"
+        break;
   }
   ctx.fillRect( view_x*TILE_SIZE, view_y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
 }
 
-// Currently not being used. 
-var Tile = function (loc_x, loc_y, tileType) {
-  // 1 walk         - green
-  // 0 surf         - blue
-  // -1 obstructed  - black
-  this.x = loc_x
-  this.y = loc_y
-  this.tileType = tileType;
-};
 
 // Generates a map. There will be black sections where you can't walk
 // and black sections on ever border. Each map will be whatever section
-// of the world that gets loaded.  
+// of the world that gets loaded.
 function generateMap(width, height) {
+  width += VIEW_WIDTH;
+  height += VIEW_HEIGHT;
   var map = []
   for (var x = 0; x < width; x++) {
     var col = [];
     for(var y = 0; y < height; y++){
-      if( x < VIEW_WIDTH/2 || x > width - VIEW_WIDTH/2 || 
-          y < VIEW_HEIGHT/2 || y > height - VIEW_HEIGHT/2){
-          col.push(-1); // initilize boreders to black. 
+      if( x < VIEW_WIDTH/2 || x >= width - VIEW_WIDTH/2 ||
+          y < VIEW_HEIGHT/2 || y >= height - VIEW_HEIGHT/2){
+        col.push(-1); // initilize boreders to black.
       } else {
-          col.push(1)// initialze the map to walkable grass.
-          
+        col.push(1)// initialze the map to walkable grass.
       }
     }
     map.push(col);
   }
   return map
 }
+// Give this function matrix locations
+function inBounds(map, loc_x, loc_y) {
+  if( loc_x < VIEW_WIDTH/2 || loc_x > map.length-(VIEW_WIDTH/2) ||
+        loc_y < VIEW_HEIGHT || loc_y > map[0].length-(VIEW_HEIGHT/2)){
+          return false;
+        }
+  return true;
+}
 
 // This function will put a building or something on the
-// map where the player can't move to. 
-// TODO: Add out of bounds logic. 
+// map where the player can't move to.
+// loc_x and loc_y are map coordinates, not mat
+// TODO: Add out of bounds logic.
 function insertObstruction(map, loc_x, loc_y, width, height) {
-    for(var x = loc_x; x < width; x++){
-        for( vary = loc_y; y < height; y++){
-            map[x][y] = -1 // code for not walkable. 
-        }
+  loc_x += VIEW_WIDTH/2;
+  loc_y += VIEW_HEIGHT/2;
+  for(var x = loc_x; x < width + loc_x; x++){
+    for( var y = loc_y; y < height + loc_y; y++){
+      map[x][y] = -1 // code for not walkable.
     }
-    return map
-}
-var SproulTown = generateMap(50,50);
-insertObstruction(SproulTown, 22, 22,5,5);
+  }
+  return map
 
-
-// Going to need to be called hella.  
-function drawViewport(map, loc_x, loc_y) {
-    for(var y = 0; y < VIEW_HEIGHT; y++){
-        for(var x = 0; x < VIEW_WIDTH; x++){
-            drawTile(x,y, map[loc_x+x][loc_y+y])
-        }
-    }
 }
 
 
-drawTile(3,3,1);
-drawTile(15,11, 0)
+// Going to need to be called hella.
+// loc_x and loc_y have to be the center
+// indexed 0 through 16, 17 total
+function drawViewport(map, map_x, map_y) {
+  var mat_x = map_x + VIEW_WIDTH/2;
+  var mat_y = map_y + VIEW_HEIGHT/2;
+  for(var x = 0; x <= VIEW_WIDTH; x++){
+    for(var y = 0; y <= VIEW_HEIGHT; y++){
+      drawTile(x,y, map[map_x+x][map_y+y])
+    }
+  }
+}
+
+
+var mapX = 0;
+var mapY = 0;
+var matX = mapX + VIEW_WIDTH/2  // don't touch
+var matY = mapY + VIEW_HEIGHT/2 // don't touch
+
+key.pressed.on("w", function(key_event) {
+  if( SproulTown[matX][matY-1] == 1){
+    mapY -= 1;
+    matY -= 1
+  }
+  drawViewport(SproulTown, mapX, mapY);
+  drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
+  console.log("Direction");
+});
+
+key.pressed.on("s", function(key_event) {
+  if( SproulTown[matX][matY+1] == 1){
+    mapY += 1
+    matY += 1
+  }
+  drawViewport(SproulTown, mapX, mapY);
+  drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
+  console.log("Direction");
+});
+
+key.pressed.on("a", function(key_event) {
+  if( SproulTown[matX-1][matY] == 1){
+    mapX -= 1;
+    matX -= 1
+  }
+  drawViewport(SproulTown, mapX, mapY);
+  drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
+  console.log("Direction");
+});
+
+key.pressed.on("d", function(key_event) {
+  if( SproulTown[matX+1][matY] == 1){
+    mapX += 1;
+    matX += 1;
+  }
+  drawViewport(SproulTown, mapX, mapY);
+  drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
+  console.log("Direction");
+});
+
+
+var SproulTown = generateMap(7,7)
+insertObstruction(SproulTown, 1,1,1,1)
+drawViewport(SproulTown, 0, 0);
+drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");

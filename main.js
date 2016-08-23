@@ -15,13 +15,14 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     width: 850,
     height: 650,
-    resizable: false})
+    resizable: false
+    })
 
   // and load the index.html of the app.
   mainWindow.loadURL(`file://${__dirname}/app/index.html`)
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
