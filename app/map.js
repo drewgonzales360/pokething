@@ -1,6 +1,26 @@
-const canvas = document.getElementById("map");
-const ctx = canvas.getContext("2d");
-const key = require('key-emit')(document);
+/****************************************************************
+FileName: Map.js
+Kenneth Drew Gonzales
+Pokemon Hope
+
+Description:
+This class is used to draw and initilize the map where the
+main character will adventure.
+
+A townMap is a small section of the WORLD that the player
+will navigate through. My hope is that each townMap will
+be loaded individualy.
+
+The viewport is the immediate screen that the user sees
+at all times. This view port is made of tiles, 17 wide,
+and 13 vertically.
+
+Last Edited: 8/24/16
+****************************************************************/
+
+const canvas      = document.getElementById("map");
+const ctx         = canvas.getContext("2d");
+const key         = require('key-emit')(document);
 ctx.canvas.width  = window.innerWidth;
 ctx.canvas.height = window.innerHeight;
 
@@ -9,10 +29,15 @@ const VIEW_WIDTH  = 16;
 const VIEW_HEIGHT = 12;
 
 
-module.exports = {
-  // Generates a map. There will be black sections where you can't walk
-  // and black sections on ever border. Each map will be whatever section
-  // of the world that gets loaded.
+module.exports  = {
+  /****************************************************************
+  generateMap
+  summary
+    Generates the map that is walkable by the user. This function
+    also generates a little extra and makes it black to be the
+    borders of the map. The black region that you see when you
+    go to the edge of the map.
+  ****************************************************************/
   generateMap: function(width, height) {
     width += VIEW_WIDTH;
     height += VIEW_HEIGHT;
@@ -31,10 +56,13 @@ module.exports = {
     }
     return map
   },
-  // gateLocation is a string with south indicating the
-  // gate is in the southern border of the map
-  // dist is the distance from the top, or the distance from
-  // west border. The topleft corner has index 00
+
+  /****************************************************************
+  insertGate
+  summary
+    creates a gate on an edge of the map that will eventually lead
+    to another map.
+  ****************************************************************/
   insertGate: function(townMap, nextMap, gateLocation, dist){
     switch (gateLocation) {
       case "north":
@@ -52,10 +80,15 @@ module.exports = {
       default:
     }
   },
-  // This function will put a building or something on the
-  // map where the player can't move to.
-  // loc_x and loc_y are map coordinates, not mat
-  // TODO: Add out of bounds logic.
+
+  /****************************************************************
+  insertObstruction
+  summary
+    given a map, creates a region of the map that doesn't allow
+    the user to walk.
+  return
+    returns the map in case you wanna make copies of it.
+  ****************************************************************/
   insertObstruction: function(map, loc_x, loc_y, width, height) {
     loc_x += VIEW_WIDTH/2;
     loc_y += VIEW_HEIGHT/2;
@@ -67,92 +100,101 @@ module.exports = {
     return map
   },
 
+  /****************************************************************
+  initMap
+  summary
+    Creates and initilizes the walking feature of the game.
+
+  TODO: add functionality for switching maps.
+  ****************************************************************/
   initMap: function(townMap, mapX, mapY){
     var direction = "south";
-    var exit = "false"
     var matX = mapX + VIEW_WIDTH/2  // don't touch
     var matY = mapY + VIEW_HEIGHT/2 // don't touch
-
-    if (exit == "Root2") {
-      return exit;
-    }
 
     drawViewport(townMap, mapX, mapY);
     drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
 
     key.pressed.on("w", function(key_event) {
       direction = "north";
-      if ( townMap[matX][matY-1] == 3 ) {
-        drawTile(1,1,"player");
-        // return "Root2";
-      }
-      if( townMap[matX][matY-1] == -1){
-        console.log("Border hit.");
-      } else {
-        mapY -= 1;
-        matY -= 1
-        drawViewport(townMap, mapX, mapY);
-        drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
+      switch (townMap[matX][matY-1]) {
+        case 3:
+          drawTile(1,1,"player");
+          break;
+        case -1:
+          console.log("Border hit.");
+          break;
+        default:
+          mapY -= 1;
+          matY -= 1
+          drawViewport(townMap, mapX, mapY);
+          drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
+          break;
       }
     });
 
     key.pressed.on("s", function(key_event) {
       direction = "south";
-      if ( townMap[matX][matY+1] == 3 ) {
-        drawTile(1,1,"player");
-        return "Root2";
-      }
-      if( townMap[matX][matY+1] == -1){
-        console.log("Border hit.");
-      } else {
-        mapY += 1
-        matY += 1
-        drawViewport(townMap, mapX, mapY);
-        drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
-
+      switch (townMap[matX][matY+1]) {
+        case 3:
+          drawTile(1,1,"player");
+          break;
+        case -1:
+          console.log("Border hit.");
+          break;
+        default:
+          mapY += 1
+          matY += 1
+          drawViewport(townMap, mapX, mapY);
+          drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
       }
     });
 
     key.pressed.on("a", function(key_event) {
       direction = "west";
-      if ( townMap[matX-1][matY] == 3 ) {
-        drawTile(1,1,"player");
-        return "Root2";
-      }
-      if( townMap[matX-1][matY] == -1){
-        console.log("Border hit.");
-      } else {
-        mapX -= 1;
-        matX -= 1
-        drawViewport(townMap, mapX, mapY);
-        drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
+      switch (townMap[matX-1][matY]) {
+        case 3:
+          drawTile(1,1,"player");
+          break;
+        case -1:
+          console.log("Border hit.");
+          break;
+        default:
+          mapX -= 1;
+          matX -= 1
+          drawViewport(townMap, mapX, mapY);
+          drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
       }
     });
 
-    var valeu = key.pressed.on("d", function(key_event) {
+    key.pressed.on("d", function(key_event) {
       direction = "east";
-      if ( townMap[matX+1][matY] == 3 ) {
-        drawTile(1,1,"player");
-        return "Root2";
-      }
-      if( townMap[matX+1][matY] == -1){
-        console.log("Border hit.");
-      } else {
-        mapX += 1;
-        matX += 1;
-        drawViewport(townMap, mapX, mapY);
-        drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
-
+      switch (townMap[matX+1][matY]) {
+        case 3:
+          drawTile(1,1,"player");
+          break;
+        case -1:
+          console.log("Border hit.");
+          break;
+        default:
+          mapX += 1;
+          matX += 1;
+          drawViewport(townMap, mapX, mapY);
+          drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
       }
     });
-    return valeu;
   }
 }
 
 
 
 
-// used to draw a tile on the viewport
+/****************************************************************
+drawTile
+summary
+  draws an individual tile to the map. This should never
+  be called outside of this class.
+****************************************************************/
 function drawTile( view_x, view_y, fillStyle ) {
   if( view_x > VIEW_WIDTH || view_y > VIEW_HEIGHT){
     console.error("drawTile out of range.");
@@ -185,9 +227,11 @@ function drawTile( view_x, view_y, fillStyle ) {
   ctx.fillRect( view_x*TILE_SIZE, view_y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
 }
 
-// Going to need to be called hella.
-// loc_x and loc_y have to be the center
-// indexed 0 through 16, 17 total
+/****************************************************************
+drawViewport
+summary
+  updates the current viewport when a user moves, this is called.
+****************************************************************/
 function drawViewport(map, map_x, map_y) {
   var mat_x = map_x + VIEW_WIDTH/2;
   var mat_y = map_y + VIEW_HEIGHT/2;
