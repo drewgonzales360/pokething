@@ -15,6 +15,13 @@ The viewport is the immediate screen that the user sees
 at all times. This view port is made of tiles, 17 wide,
 and 13 vertically.
 
+The topleft corner that is walkable is indexed 0,0. so
+insertGate
+initMap
+insertObstruction
+insertGate
+
+all follow this convention.
 Last Edited: 8/24/16
 ****************************************************************/
 
@@ -66,16 +73,16 @@ module.exports  = {
   insertGate: function(townMap, nextMap, gateLocation, dist){
     switch (gateLocation) {
       case "north":
-        townMap[dist+VIEW_WIDTH/2][VIEW_HEIGHT/2-1] = 3
+        townMap[dist+VIEW_WIDTH/2][VIEW_HEIGHT/2-1] = nextMap
         break;
       case "south":
-        townMap[dist+VIEW_WIDTH/2][townMap[0].length-VIEW_HEIGHT/2] = 3;
+        townMap[dist+VIEW_WIDTH/2][townMap[0].length-VIEW_HEIGHT/2] = nextMap;
         break;
       case "west":
-        townMap[VIEW_WIDTH/2-1][dist+VIEW_HEIGHT/2] = 3;
+        townMap[VIEW_WIDTH/2-1][dist+VIEW_HEIGHT/2] = nextMap;
         break;
       case "east":
-        townMap[townMap.length-VIEW_WIDTH/2][dist+VIEW_HEIGHT/2] = 3;
+        townMap[townMap.length-VIEW_WIDTH/2][dist+VIEW_HEIGHT/2] = nextMap;
         break;
       default:
     }
@@ -117,10 +124,10 @@ module.exports  = {
 
     key.pressed.on("w", function(key_event) {
       direction = "north";
+      if ( typeof townMap[matX][matY-1] === "string") {
+        loadMap(townMap[matX][matY-1])
+      }
       switch (townMap[matX][matY-1]) {
-        case 3:
-          drawTile(1,1,"player");
-          break;
         case -1:
           console.log("Border hit.");
           break;
@@ -135,10 +142,10 @@ module.exports  = {
 
     key.pressed.on("s", function(key_event) {
       direction = "south";
+      if ( typeof townMap[matX][matY+1] === "string") {
+        loadMap(townMap[matX][matY+1])
+      }
       switch (townMap[matX][matY+1]) {
-        case 3:
-          drawTile(1,1,"player");
-          break;
         case -1:
           console.log("Border hit.");
           break;
@@ -152,10 +159,10 @@ module.exports  = {
 
     key.pressed.on("a", function(key_event) {
       direction = "west";
+      if ( typeof townMap[matX-1][matY] === "string") {
+        loadMap(townMap[matX-1][matY]);
+      }
       switch (townMap[matX-1][matY]) {
-        case 3:
-          drawTile(1,1,"player");
-          break;
         case -1:
           console.log("Border hit.");
           break;
@@ -169,10 +176,10 @@ module.exports  = {
 
     key.pressed.on("d", function(key_event) {
       direction = "east";
+      if (typeof townMap[matX+1][matY] === "string") {
+        loadMap(townMap[matX+1][matY]);
+      }
       switch (townMap[matX+1][matY]) {
-        case 3:
-          drawTile(1,1,"player");
-          break;
         case -1:
           console.log("Border hit.");
           break;
@@ -204,26 +211,31 @@ function drawTile( view_x, view_y, fillStyle ) {
   if( fillStyle == -2){
     return;
   }
-  switch(fillStyle) {
-    case "player":
-      ctx.fillStyle = "bisque"
-      break;
-    case 3:
-      ctx.fillStyle = "gray"
-      break;
-    case 1:
-      ctx.fillStyle = "green"
-      break;
-    case 0:
-      ctx.fillStyle = "blue"
-      break;
-    case -1:
-      ctx.fillStyle = "black"
-      break;
-    default:
-      ctx.fillStyle = "red"
-      break;
+  if ( typeof fillStyle === "string") {
+    switch (fillStyle) {
+      case "player":
+        ctx.fillStyle = "bisque";
+        break;
+      default:
+        ctx.fillStyle = "gray"
+    }
+  } else {
+    switch(fillStyle) {
+      case 1:
+        ctx.fillStyle = "green"
+        break;
+      case 0:
+        ctx.fillStyle = "blue"
+        break;
+      case -1:
+        ctx.fillStyle = "black"
+        break;
+      default:
+        ctx.fillStyle = "red"
+        break;
+    }
   }
+
   ctx.fillRect( view_x*TILE_SIZE, view_y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
 }
 
@@ -240,4 +252,8 @@ function drawViewport(map, map_x, map_y) {
       drawTile(x,y, map[map_x+x][map_y+y])
     }
   }
+}
+
+function loadMap( nextMap ) {
+  window.location.href = `file://${__dirname}/htmlmaps/` + nextMap + '.html'
 }

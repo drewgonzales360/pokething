@@ -14,12 +14,13 @@ function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 850,
-    height: 650
+    height: 650,
+    frame: false
     // resizable: false
     })
 
   // and load the index.html of the app.
-  mainWindow.loadURL(`file://${__dirname}/app/index.html`)
+  mainWindow.loadURL(`file://${__dirname}/app/htmlmaps/SproulTown.html`)
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
