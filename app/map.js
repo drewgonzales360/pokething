@@ -28,6 +28,7 @@ const TILE_SIZE   = 50;
 const VIEW_WIDTH  = 16;
 const VIEW_HEIGHT = 12;
 
+var   currentMap  = [];
 /****************************************************************
 drawTile
 summary
@@ -159,7 +160,7 @@ summary
 
 TODO: add functionality for switching maps.
 ****************************************************************/
-function initMap(townMap, mapX, mapY){
+function initMap( townMap, mapX, mapY){
   var direction = "south";
   var matX = mapX + VIEW_WIDTH/2  // don't touch
   var matY = mapY + VIEW_HEIGHT/2 // don't touch
@@ -239,4 +240,8 @@ function initMap(townMap, mapX, mapY){
 
 
 var SproulTown = generateMap(7,7);
+insertGate(SproulTown, "Root2", "east",  3);
+insertGate(SproulTown, "Root2", "north",  3);
+insertGate(SproulTown, "Root2", "south",  3);
+insertGate(SproulTown, "Root2", "west",  3);
 initMap(SproulTown, 3,3);
