@@ -11,10 +11,11 @@ Last Edited: 8/25/16
 ****************************************************************/
 var Map = require('../map');
 
-var Lagunta = Map.generateMap(15,22);
+var Tagatai = Map.generateMap(15,15);
 
 // Big block in the bottom left.
 
-Map.insertGate(Lagunta, "Route2", "north", 5);
-Map.insertGate(Lagunta, "Route7", "east", 18);
-Map.initMap(Lagunta, "Lagunta",0,4);
+Map.insertGate(Tagatai, "Route42", "north", 5);
+// Map.insertGate(Tagatai, "Route31", "east", 6);
+// Map.insertGate(Tagatai, "Route9", "south", 12)
+Map.initMap(Tagatai, "Tagatai",0,4);

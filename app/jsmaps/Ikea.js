@@ -16,4 +16,4 @@ var Ikea = Map.generateMap( 13,18);
 
 Map.insertGate(Ikea, "Route7", "north", 8);
 Map.insertGate(Ikea, "Route42", "west", 16);
-Map.initMap(Ikea, 0,7);
+Map.initMap(Ikea, "Ikea",0,7);

@@ -3,9 +3,9 @@ FileName: main.js
 Kenneth Drew Gonzales
 
 Description:
-Pokemon Hope. This is a videogame using a tile sized map 
+Pokemon Hope. This is a videogame using a tile sized map
 and you play one character that moves through the map. The
-player is always shown in the center of the screen. 
+player is always shown in the center of the screen.
 
 Last Edited: 8/25/16
 ****************************************************************/
@@ -14,27 +14,37 @@ Last Edited: 8/25/16
 const electron = require('electron')
 
 // Module to create native browser window.
-const app = electron.app
-const BrowserWindow = electron.BrowserWindow
+const app             = electron.app
+const BrowserWindow   = electron.BrowserWindow
+const ipc             = electron.ipcMain;
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
 let mainWindow
+let backgroundProcess
 
 function createWindow () {
   // Create the browser window.
   mainWindow = new BrowserWindow({
     width: 850,
     height: 650,
-    // frame: false
+    center: true,
+    // frame: false,
     resizable: false
     })
 
+  backgroundProcess = new BrowserWindow({
+    width: 400,
+    height: 300,
+    show: true
+  })
   // and load the index.html of the app.
+  backgroundProcess.loadURL(`file://${__dirname}/app/bgProcess.html`)
   mainWindow.loadURL(`file://${__dirname}/app/htmlmaps/SproulTown.html`)
 
   // Open the DevTools.
-  // mainWindow.webContents.openDevTools()
+  mainWindow.webContents.openDevTools()
+  backgroundProcess.webContents.openDevTools();
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -42,6 +52,8 @@ function createWindow () {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null
+    backgroundProcess = null
+    app.quit();
   })
 }
 
@@ -69,3 +81,18 @@ app.on('activate', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
+ipc.on('remembering-current-map', function(event, currentMap) {
+  String(currentMap);
+  backgroundProcess.webContents.send('remembering-current-map', currentMap);
+});
+
+// map just asked for the last gate. 
+ipc.on('requested-last-gate', function(event) {
+  backgroundProcess.webContents.send('requested-last-gate');
+})
+
+// background just told me the last gate, tell
+// main process.
+ipc.on('last-gate-enclosed', function(event, lastGate) {
+  mainWindow.webContents.send('last-gate-enclosed', lastGate);
+})
