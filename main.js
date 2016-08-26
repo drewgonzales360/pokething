@@ -1,9 +1,20 @@
-// main.js
+/****************************************************************
+FileName: main.js
+Kenneth Drew Gonzales
 
-const electron = require('electron')
+Description:
+Pokemon Hope. This is a videogame using a tile sized map 
+and you play one character that moves through the map. The
+player is always shown in the center of the screen. 
+
+Last Edited: 8/25/16
+****************************************************************/
+
 // Module to control application life.
-const app = electron.app
+const electron = require('electron')
+
 // Module to create native browser window.
+const app = electron.app
 const BrowserWindow = electron.BrowserWindow
 
 // Keep a global reference of the window object, if you don't, the window will
@@ -15,15 +26,15 @@ function createWindow () {
   mainWindow = new BrowserWindow({
     width: 850,
     height: 650,
-    frame: false
-    // resizable: false
+    // frame: false
+    resizable: false
     })
 
   // and load the index.html of the app.
   mainWindow.loadURL(`file://${__dirname}/app/htmlmaps/SproulTown.html`)
 
   // Open the DevTools.
-  mainWindow.webContents.openDevTools()
+  // mainWindow.webContents.openDevTools()
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {

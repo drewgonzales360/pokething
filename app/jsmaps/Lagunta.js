@@ -17,4 +17,4 @@ var Lagunta = Map.generateMap(15,22);
 
 Map.insertGate(Lagunta, "Route2", "north", 5);
 Map.insertGate(Lagunta, "Route7", "east", 18);
-Map.initMap(Lagunta, 0,5);
+Map.initMap(Lagunta, 0,4);

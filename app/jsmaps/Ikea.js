@@ -10,10 +10,10 @@ Last Edited: 8/25/16
 ****************************************************************/
 var Map = require('../map');
 
-var Ikea = Map.generateMap( 30,39);
+var Ikea = Map.generateMap( 13,18);
 
 // Big block in the bottom left.
 
-Map.insertGate(Ikea, "Route7", "north", 18);
-Map.insertGate(Ikea, "Route42", "west", 20);
-Map.initMap(Ikea, 0,18);
+Map.insertGate(Ikea, "Route7", "north", 8);
+Map.insertGate(Ikea, "Route42", "west", 16);
+Map.initMap(Ikea, 0,7);
