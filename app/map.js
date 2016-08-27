@@ -38,7 +38,7 @@ const VIEW_WIDTH  = 16;
 const VIEW_HEIGHT = 12;
 var currentMap  = "";
 
-var startingGate = "";
+var startingGate = ipc.sendSync('last-map-request');
 var gates = {}; // hashmap for quickly finding gates.
 module.exports  = {
   /****************************************************************
@@ -126,11 +126,10 @@ module.exports  = {
   initMap: function(townMap, mapName, mapX, mapY){
     console.assert( typeof mapName === "string");
     currentMap = mapName;
-    getGate();
-
+    
     console.log(gates[startingGate]);
-    // mapX = gates[startingGate];
-    // mapY = gates[startingGate];
+    mapX = gates[startingGate][0];
+    mapY = gates[startingGate][1];
     var direction = "south";
     var matX = mapX + VIEW_WIDTH/2  // don't touch
     var matY = mapY + VIEW_HEIGHT/2 // don't touch
@@ -278,17 +277,5 @@ summary
   the map that was just drawn was `currentMap`
 ****************************************************************/
 function loadMap( nextMap ) {
-  String(currentMap);
-  ipc.send('remembering-current-map', currentMap);
   window.location.href = `file://${__dirname}/htmlmaps/` + nextMap + '.html'
-}
-
-ipc.on('last-gate-enclosed', function(event, lastGate) {
-  startingGate = String(lastGate);
-})
-
-// after a long conversation between main, and the
-// background process, lastGate will be called.
-function getGate() {
-  ipc.send('requested-last-gate');
 }
