@@ -81,18 +81,7 @@ app.on('activate', function () {
 
 // In this file you can include the rest of your app's specific main process
 // code. You can also put them in separate files and require them here.
-ipc.on('remembering-current-map', function(event, currentMap) {
-  String(currentMap);
-  backgroundProcess.webContents.send('remembering-current-map', currentMap);
-});
-
-// map just asked for the last gate. 
-ipc.on('requested-last-gate', function(event) {
-  backgroundProcess.webContents.send('requested-last-gate');
-})
-
-// background just told me the last gate, tell
-// main process.
-ipc.on('last-gate-enclosed', function(event, lastGate) {
-  mainWindow.webContents.send('last-gate-enclosed', lastGate);
+var lastMap = "Route2"
+ipc.on('last-map-request', function(event){
+    event.returnValue = lastMap;
 })
