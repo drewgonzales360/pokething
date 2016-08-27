@@ -36,9 +36,7 @@ ctx.canvas.height = window.innerHeight;
 const TILE_SIZE   = 50;
 const VIEW_WIDTH  = 16;
 const VIEW_HEIGHT = 12;
-var currentMap  = "";
 
-var startingGate = ipc.sendSync('last-map-request');
 var gates = {}; // hashmap for quickly finding gates.
 module.exports  = {
   /****************************************************************
@@ -78,19 +76,19 @@ module.exports  = {
     switch (gateLocation) {
       case "north":
         townMap[dist+VIEW_WIDTH/2][VIEW_HEIGHT/2-1] = nextMap
-        gates[nextMap] = [dist+VIEW_WIDTH/2,VIEW_HEIGHT/2-1];
+        gates[nextMap] = ["north", dist+VIEW_WIDTH/2,VIEW_HEIGHT/2-1];
         break;
       case "south":
         townMap[dist+VIEW_WIDTH/2][townMap[0].length-VIEW_HEIGHT/2] = nextMap;
-        gates[nextMap] = [dist+VIEW_WIDTH/2,townMap[0].length-VIEW_HEIGHT/2];
+        gates[nextMap] = ["south", dist+VIEW_WIDTH/2,townMap[0].length-VIEW_HEIGHT/2];
         break;
       case "west":
         townMap[VIEW_WIDTH/2-1][dist+VIEW_HEIGHT/2] = nextMap;
-        gates[nextMap] = [VIEW_WIDTH/2-1,dist+VIEW_HEIGHT/2];
+        gates[nextMap] = ["west", VIEW_WIDTH/2-1,dist+VIEW_HEIGHT/2];
         break;
       case "east":
         townMap[townMap.length-VIEW_WIDTH/2][dist+VIEW_HEIGHT/2] = nextMap;
-        gates[nextMap] = [townMap.length-VIEW_WIDTH/2,dist+VIEW_HEIGHT/2];
+        gates[nextMap] = ["east",townMap.length-VIEW_WIDTH/2,dist+VIEW_HEIGHT/2];
         break;
       default:
         console.log("Invalid border.");
@@ -123,13 +121,13 @@ module.exports  = {
 
   TODO: add functionality for switching maps.
   ****************************************************************/
-  initMap: function(townMap, mapName, mapX, mapY){
-    console.assert( typeof mapName === "string");
-    currentMap = mapName;
-    
-    console.log(gates[startingGate]);
-    mapX = gates[startingGate][0];
-    mapY = gates[startingGate][1];
+  initMap: function(townMap, thisMap, mapX, mapY){
+    console.assert( typeof thisMap === "string");
+    var startingGate = ipc.sendSync('last-map-request');
+    console.log(startingGate);
+    let start = setStartingLocation(gates[startingGate])
+    mapX = start[0]-VIEW_WIDTH/2;
+    mapY = start[1]-VIEW_HEIGHT/2;
     var direction = "south";
     var matX = mapX + VIEW_WIDTH/2  // don't touch
     var matY = mapY + VIEW_HEIGHT/2 // don't touch
@@ -140,7 +138,7 @@ module.exports  = {
     key.pressed.on("w", function(key_event) {
       direction = "north";
       if ( typeof townMap[matX][matY-1] === "string") {
-        loadMap(townMap[matX][matY-1])
+        loadMap(townMap[matX][matY-1], thisMap)
       }
       switch (townMap[matX][matY-1]) {
         case -1:
@@ -158,7 +156,7 @@ module.exports  = {
     key.pressed.on("s", function(key_event) {
       direction = "south";
       if ( typeof townMap[matX][matY+1] === "string") {
-        loadMap(townMap[matX][matY+1])
+        loadMap(townMap[matX][matY+1], thisMap)
       }
       switch (townMap[matX][matY+1]) {
         case -1:
@@ -175,7 +173,7 @@ module.exports  = {
     key.pressed.on("a", function(key_event) {
       direction = "west";
       if ( typeof townMap[matX-1][matY] === "string") {
-        loadMap(townMap[matX-1][matY]);
+        loadMap(townMap[matX-1][matY], thisMap);
       }
       switch (townMap[matX-1][matY]) {
         case -1:
@@ -192,7 +190,7 @@ module.exports  = {
     key.pressed.on("d", function(key_event) {
       direction = "east";
       if (typeof townMap[matX+1][matY] === "string") {
-        loadMap(townMap[matX+1][matY]);
+        loadMap(townMap[matX+1][matY], thisMap);
       }
       switch (townMap[matX+1][matY]) {
         case -1:
@@ -276,6 +274,28 @@ summary
   Tells the bgProcess, which is listening for 'last-map' that
   the map that was just drawn was `currentMap`
 ****************************************************************/
-function loadMap( nextMap ) {
+function loadMap( nextMap , thisMap) {
+  ipc.sendSync('memorize-last-map', thisMap);
   window.location.href = `file://${__dirname}/htmlmaps/` + nextMap + '.html'
+}
+
+function setStartingLocation( gate ) {
+  let gateX = gate[1];
+  let gateY = gate[2];
+  switch (gate[0]) {
+    case "north":
+      return [gateX, gateY+1];
+      break;
+    case "south":
+      return [gateX, gateY-1];
+      break;
+    case "east":
+      return [gateX-1, gateY];
+      break;
+    case "west":
+      return [gateX+1, gateY];
+      break;
+    default:
+      console.log("Gate type not found.");
+  }
 }

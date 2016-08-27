@@ -85,3 +85,8 @@ var lastMap = "Route2"
 ipc.on('last-map-request', function(event){
     event.returnValue = lastMap;
 })
+
+ipc.on('memorize-last-map', function(event, lMap){
+  lastMap = lMap;
+  event.returnValue = lastMap;
+})
