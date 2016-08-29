@@ -26,5 +26,5 @@ Map.insertObstruction(Route2, 99, 60, 2, 9);
 
 Map.insertObstruction(Route2, 99,99,1,1);
 Map.insertGate(Route2, "SproulTown", "west", 0);
-Map.insertGate(Route2, "Lagunta", "south", 25);
+Map.insertGate(Route2, "Lagunta", "south", 95);
 Map.initMap(Route2, "Route2", 0,65);

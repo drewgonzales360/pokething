@@ -14,6 +14,8 @@ Map.insertObstruction(SproulTown, 1,1,4,4); // Players house
 Map.insertObstruction(SproulTown, 7,1,4,4); // Rivals house
 Map.insertObstruction(SproulTown, 4,9,6,4); // Lab
 
+Map.insertPerson(SproulTown, 16, 5);
+Map.insertPerson(SproulTown, 18,9);
 Map.insertGate(SproulTown, "Route2", "east",8);
 
 Map.initMap(SproulTown, "SproulTown", 0,0);

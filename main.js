@@ -29,7 +29,7 @@ function createWindow () {
     width: 850,
     height: 650,
     center: true,
-    // frame: false,
+    frame: false,
     resizable: false
     })
 
@@ -85,8 +85,15 @@ var lastMap = "Route2"
 ipc.on('last-map-request', function(event){
     event.returnValue = lastMap;
 })
-
 ipc.on('memorize-last-map', function(event, lMap){
   lastMap = lMap;
   event.returnValue = lastMap;
 })
+
+ipc.on('npc-update', function (event, map, loc_x, loc_y) {
+  backgroundProcess.webContents.send('npc-update', map, loc_x, loc_y);
+})
+
+ipc.on('updated-npc', function(event, x, y) {
+  mainWindow.webContents.send('updated-npc', x, y);
+});

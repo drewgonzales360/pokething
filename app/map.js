@@ -114,6 +114,24 @@ module.exports  = {
     return map
   },
 
+  insertPerson: function( map, loc_x, loc_y ){
+    loc_x += VIEW_WIDTH/2;
+    loc_y += VIEW_HEIGHT/2;
+    if( map[loc_x][loc_y] === -1){
+      console.log("Out of bounds error.");
+    }
+    map[loc_x][loc_y] = -3 // code for npc.
+    setInterval(function(){
+      ipc.send('npc-update', map, loc_x, loc_y);
+      ipc.on('updated-npc', function(event, x, y) {
+        map[loc_x][loc_y] = 1; // code for grass.
+        loc_x = x
+        loc_y = y
+        map[loc_x][loc_y] = -3; // code for npc
+      });
+
+    }, 3000)
+  },
   /****************************************************************
   initMap
   summary
@@ -135,6 +153,9 @@ module.exports  = {
     drawViewport(townMap, mapX, mapY);
     drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
 
+    setInterval(function () {
+      drawViewport(townMap, mapX, mapY);
+    }, 500);
     key.pressed.on("w", function(key_event) {
       direction = "north";
       if ( typeof townMap[matX][matY-1] === "string") {
@@ -144,11 +165,13 @@ module.exports  = {
         case -1:
           console.log("Border hit.");
           break;
+        case -3: // NPC hit
+          console.log("NPC hit.");
+          break;
         default:
           mapY -= 1;
           matY -= 1
           drawViewport(townMap, mapX, mapY);
-          drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
           break;
       }
     });
@@ -162,11 +185,13 @@ module.exports  = {
         case -1:
           console.log("Border hit.");
           break;
+        case -3: // NPC hit
+          console.log("NPC hit.");
+          break;
         default:
           mapY += 1
           matY += 1
           drawViewport(townMap, mapX, mapY);
-          drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
       }
     });
 
@@ -179,11 +204,13 @@ module.exports  = {
         case -1:
           console.log("Border hit.");
           break;
+        case -3: // NPC hit
+          console.log("NPC hit.");
+          break;
         default:
           mapX -= 1;
           matX -= 1
           drawViewport(townMap, mapX, mapY);
-          drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
       }
     });
 
@@ -196,11 +223,13 @@ module.exports  = {
         case -1:
           console.log("Border hit.");
           break;
+        case -3: // NPC hit
+          console.log("NPC hit.");
+          break;
         default:
           mapX += 1;
           matX += 1;
           drawViewport(townMap, mapX, mapY);
-          drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2, "player");
       }
     });
   }
@@ -243,6 +272,9 @@ function drawTile( view_x, view_y, fillStyle ) {
       case -1:
         ctx.fillStyle = "black"
         break;
+      case -3: // NPC hit
+        ctx.fillStyle = "burlywood"
+        break;
       default:
         ctx.fillStyle = "red"
         break;
@@ -265,6 +297,7 @@ function drawViewport(map, map_x, map_y) {
       drawTile(x,y, map[map_x+x][map_y+y])
     }
   }
+  drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
 }
 
 
@@ -298,4 +331,22 @@ function setStartingLocation( gate ) {
     default:
       console.log("Gate type not found.");
   }
+}
+
+
+/****************************************************************
+npcMove
+summary
+  This will determine where the npc moves. Must pass it matrix
+  values, actual values in the matrix, not locations in the map.
+  Call this function ever two seconds or so.
+****************************************************************/
+
+function include(array, value) {
+  for (var i = 0; i < array.length; i++) {
+    if (array[i] === value) {
+      return true;
+    }
+  }
+  return false;
 }

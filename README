@@ -1,0 +1,6 @@
+
+draw picture.
+
+var img = new Image();
+img.src = `file://${__dirname}/../grass.png`;
+ctx.drawImage(img, view_x*TILE_SIZE, view_y*TILE_SIZE, TILE_SIZE, TILE_SIZE);
