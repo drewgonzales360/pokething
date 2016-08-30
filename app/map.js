@@ -22,7 +22,7 @@ insertObstruction
 insertGate
 
 all follow this convention.
-Last Edited: 8/24/16
+Last Edited: 8/29/16
 ****************************************************************/
 
 const canvas      = document.getElementById("map");
@@ -37,8 +37,13 @@ const TILE_SIZE   = 50;
 const VIEW_WIDTH  = 16;
 const VIEW_HEIGHT = 12;
 
-var people = {};        // hashmap for quickly finding people. 
-var gates = {};         // hashmap for quickly finding gates.
+var mapWidth      = 0;
+var mapHeight     = 0;
+var currentMap    = [];    // global variable for map the player sees.
+var people        = {};        // hashmap for quickly finding people.
+var gates         = {};         // hashmap for quickly finding gates.
+
+
 module.exports  = {
   /****************************************************************
   generateMap
@@ -49,6 +54,8 @@ module.exports  = {
     go to the edge of the map.
   ****************************************************************/
   generateMap: function(width, height) {
+    mapWidth = width;
+    mapHeight = height;
     width += VIEW_WIDTH;
     height += VIEW_HEIGHT;
     var map = []
@@ -64,7 +71,7 @@ module.exports  = {
       }
       map.push(col);
     }
-    return map
+    currentMap = map;
   },
 
   /****************************************************************
@@ -73,23 +80,23 @@ module.exports  = {
     creates a gate on an edge of the map that will eventually lead
     to another map.
   ****************************************************************/
-  insertGate: function(townMap, nextMap, gateLocation, dist){
+  insertGate: function(nextMap, gateLocation, dist){
     switch (gateLocation) {
       case "north":
-        townMap[dist+VIEW_WIDTH/2][VIEW_HEIGHT/2-1] = nextMap
+        currentMap[dist+VIEW_WIDTH/2][VIEW_HEIGHT/2-1] = nextMap
         gates[nextMap] = ["north", dist+VIEW_WIDTH/2,VIEW_HEIGHT/2-1];
         break;
       case "south":
-        townMap[dist+VIEW_WIDTH/2][townMap[0].length-VIEW_HEIGHT/2] = nextMap;
-        gates[nextMap] = ["south", dist+VIEW_WIDTH/2,townMap[0].length-VIEW_HEIGHT/2];
+        currentMap[dist+VIEW_WIDTH/2][currentMap[0].length-VIEW_HEIGHT/2] = nextMap;
+        gates[nextMap] = ["south", dist+VIEW_WIDTH/2,currentMap[0].length-VIEW_HEIGHT/2];
         break;
       case "west":
-        townMap[VIEW_WIDTH/2-1][dist+VIEW_HEIGHT/2] = nextMap;
+        currentMap[VIEW_WIDTH/2-1][dist+VIEW_HEIGHT/2] = nextMap;
         gates[nextMap] = ["west", VIEW_WIDTH/2-1,dist+VIEW_HEIGHT/2];
         break;
       case "east":
-        townMap[townMap.length-VIEW_WIDTH/2][dist+VIEW_HEIGHT/2] = nextMap;
-        gates[nextMap] = ["east",townMap.length-VIEW_WIDTH/2,dist+VIEW_HEIGHT/2];
+        currentMap[currentMap.length-VIEW_WIDTH/2][dist+VIEW_HEIGHT/2] = nextMap;
+        gates[nextMap] = ["east",currentMap.length-VIEW_WIDTH/2,dist+VIEW_HEIGHT/2];
         break;
       default:
         console.log("Invalid border.");
@@ -104,29 +111,46 @@ module.exports  = {
   return
     returns the map in case you wanna make copies of it.
   ****************************************************************/
-  insertObstruction: function(map, loc_x, loc_y, width, height) {
+  insertObstruction: function(loc_x, loc_y, width, height) {
     loc_x += VIEW_WIDTH/2;
     loc_y += VIEW_HEIGHT/2;
     for(var x = loc_x; x < width + loc_x; x++){
       for( var y = loc_y; y < height + loc_y; y++){
-        map[x][y] = -1 // code for not walkable.
+        currentMap[x][y] = -1 // code for not walkable.
       }
     }
-    return map
   },
 
   /****************************************************************
-  
+  insertPerson
+  summary
+    Creates a new person in a given map who will roam the allowed
+    area randomly. The direction chosen at random is from Math.random.
+
   ****************************************************************/
-  insertPerson: function( map, name, loc_x, loc_y ){
-    people[name] = [loc_x, loc_y];
-    loc_x += VIEW_WIDTH/2;
-    loc_y += VIEW_HEIGHT/2;
-    if( map[loc_x][loc_y] === -1){
-      console.log("Out of bounds error.");
+  // insertPerson: function(name, loc_x, loc_y ){
+  //   loc_x += VIEW_WIDTH/2;
+  //   loc_y += VIEW_HEIGHT/2;
+  //   people[name] = [loc_x, loc_y];
+  //   if( currentMap[loc_x][loc_y] === -1){
+  //     console.log("Out of bounds error.");
+  //     return;
+  //   }
+  //   currentMap[loc_x][loc_y] = -3; // code for npc
+  // },
+
+  generateCrowd: function(crowdCount) {
+    for(var i = 0; i < crowdCount; i++){
+      let x = Math.floor(Math.random()*mapWidth) + VIEW_WIDTH/2;
+      let y = Math.floor(Math.random()*mapHeight) + VIEW_HEIGHT/2;
+      while (currentMap[x][y] === -1) {
+        x = Math.floor(Math.random()*mapWidth) + VIEW_WIDTH/2;
+        y = Math.floor(Math.random()*mapHeight) + VIEW_HEIGHT/2;
+      }
+      insertPerson("Crowd " + i, x - VIEW_WIDTH/2, y - VIEW_HEIGHT/2);
     }
-    map[loc_x][loc_y] = -3; // code for npc
   },
+
   /****************************************************************
   initMap
   summary
@@ -134,7 +158,7 @@ module.exports  = {
 
   TODO: add functionality for switching maps.
   ****************************************************************/
-  initMap: function(townMap, thisMap, mapX, mapY){
+  initMap: function( thisMap, mapX, mapY){
     console.assert( typeof thisMap === "string");
     var startingGate = ipc.sendSync('last-map-request');
     console.log(startingGate);
@@ -145,19 +169,19 @@ module.exports  = {
     var matX = mapX + VIEW_WIDTH/2  // don't touch
     var matY = mapY + VIEW_HEIGHT/2 // don't touch
 
-    drawViewport(townMap, mapX, mapY); // not sure if i need this. 
-    
-    moveAllPeople(townMap);
+    drawViewport(mapX, mapY); // not sure if i need this.
+
+    moveAllPeople();
 
     setInterval(function () {
-      drawViewport(townMap, mapX, mapY);
+      drawViewport(mapX, mapY);
     }, 500);
     key.pressed.on("w", function(key_event) {
       direction = "north";
-      if ( typeof townMap[matX][matY-1] === "string") {
-        loadMap(townMap[matX][matY-1], thisMap)
+      if ( typeof currentMap[matX][matY-1] === "string") {
+        loadMap(currentMap[matX][matY-1], thisMap)
       }
-      switch (townMap[matX][matY-1]) {
+      switch (currentMap[matX][matY-1]) {
         case -1:
           console.log("Border hit.");
           break;
@@ -167,17 +191,17 @@ module.exports  = {
         default:
           mapY -= 1;
           matY -= 1
-          drawViewport(townMap, mapX, mapY);
+          drawViewport(mapX, mapY);
           break;
       }
     });
 
     key.pressed.on("s", function(key_event) {
       direction = "south";
-      if ( typeof townMap[matX][matY+1] === "string") {
-        loadMap(townMap[matX][matY+1], thisMap)
+      if ( typeof currentMap[matX][matY+1] === "string") {
+        loadMap(currentMap[matX][matY+1], thisMap)
       }
-      switch (townMap[matX][matY+1]) {
+      switch (currentMap[matX][matY+1]) {
         case -1:
           console.log("Border hit.");
           break;
@@ -187,16 +211,16 @@ module.exports  = {
         default:
           mapY += 1
           matY += 1
-          drawViewport(townMap, mapX, mapY);
+          drawViewport(mapX, mapY);
       }
     });
 
     key.pressed.on("a", function(key_event) {
       direction = "west";
-      if ( typeof townMap[matX-1][matY] === "string") {
-        loadMap(townMap[matX-1][matY], thisMap);
+      if ( typeof currentMap[matX-1][matY] === "string") {
+        loadMap(currentMap[matX-1][matY], thisMap);
       }
-      switch (townMap[matX-1][matY]) {
+      switch (currentMap[matX-1][matY]) {
         case -1:
           console.log("Border hit.");
           break;
@@ -206,16 +230,16 @@ module.exports  = {
         default:
           mapX -= 1;
           matX -= 1
-          drawViewport(townMap, mapX, mapY);
+          drawViewport(mapX, mapY);
       }
     });
 
     key.pressed.on("d", function(key_event) {
       direction = "east";
-      if (typeof townMap[matX+1][matY] === "string") {
-        loadMap(townMap[matX+1][matY], thisMap);
+      if (typeof currentMap[matX+1][matY] === "string") {
+        loadMap(currentMap[matX+1][matY], thisMap);
       }
-      switch (townMap[matX+1][matY]) {
+      switch (currentMap[matX+1][matY]) {
         case -1:
           console.log("Border hit.");
           break;
@@ -225,7 +249,7 @@ module.exports  = {
         default:
           mapX += 1;
           matX += 1;
-          drawViewport(townMap, mapX, mapY);
+          drawViewport(mapX, mapY);
       }
     });
   }
@@ -285,12 +309,12 @@ drawViewport
 summary
   updates the current viewport when a user moves, this is called.
 ****************************************************************/
-function drawViewport(map, map_x, map_y) {
+function drawViewport(map_x, map_y) {
   var mat_x = map_x + VIEW_WIDTH/2;
   var mat_y = map_y + VIEW_HEIGHT/2;
   for(var x = 0; x <= VIEW_WIDTH; x++){
     for(var y = 0; y <= VIEW_HEIGHT; y++){
-      drawTile(x,y, map[map_x+x][map_y+y])
+      drawTile(x,y, currentMap[map_x+x][map_y+y])
     }
   }
   drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
@@ -301,7 +325,7 @@ function drawViewport(map, map_x, map_y) {
 loadMap
 summary
   Tells the bgProcess, which is listening for 'last-map' that
-  the map that was just drawn was `currentMap`
+  the map that was just drawn was
 ****************************************************************/
 function loadMap( nextMap , thisMap) {
   ipc.sendSync('memorize-last-map', thisMap);
@@ -347,17 +371,29 @@ function include(array, value) {
   return false;
 }
 
-function moveAllPeople(map) {
-    setInterval(function(){
-        ipc.send('npc-update', map, people);
-        ipc.on('updated-npc', function(event, peeps) {
-            for (var indi in people) {      // erase where the old people were
-                map[indi[0]][indi[1]] = 1 
-            }
-            for (var indi in peeps) {
-                map[indi[0]][indi[1]] = -3; // code for grass.
-            }
-            people = peeps;
-      });      
+function moveAllPeople() {
+  setInterval(function(){
+    ipc.send('npc-update', currentMap, people);
   }, 3000);
+}
+
+// after the main process calculates where every npc moved,
+// update the currentMap
+ipc.on('updated-npc', function(event,  peeps) {
+  for (var indi in peeps) {
+    currentMap[people[indi][0]][people[indi][1]] = 1
+    currentMap[peeps[indi][0]][peeps[indi][1]] = -3; // code for grass.
+  }
+  people = peeps;
+});
+
+function insertPerson(name, loc_x, loc_y ){
+  loc_x += VIEW_WIDTH/2;
+  loc_y += VIEW_HEIGHT/2;
+  people[name] = [loc_x, loc_y];
+  if( currentMap[loc_x][loc_y] === -1){
+    console.log("Out of bounds error.");
+    return;
+  }
+  currentMap[loc_x][loc_y] = -3; // code for npc
 }

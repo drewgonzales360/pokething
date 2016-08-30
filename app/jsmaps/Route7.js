@@ -9,10 +9,11 @@ Last Edited: 8/25/16
 ****************************************************************/
 var Map = require('../map');
 
-var Route7 = Map.generateMap(27,9);
+Map.generateMap(27,9);
 
 // Big block in the bottom left.
+Map.generateCrowd(9);
 
-Map.insertGate(Route7, "Lagunta", "west", 3);
-Map.insertGate(Route7, "Ikea", "south", 25);
-Map.initMap(Route7, "Route7", 0,2);
+Map.insertGate("Lagunta", "west", 3);
+Map.insertGate("Ikea", "south", 25);
+Map.initMap("Route7", 0,2);

@@ -8,14 +8,17 @@ He'll start there on his huge ass adventure.
 Last Edited: 8/25/16
 ****************************************************************/
 var Map = require('../map');
-var SproulTown = Map.generateMap(19,20);
+Map.generateMap(19,20);
 
-Map.insertObstruction(SproulTown, 1,1,4,4); // Players house
-Map.insertObstruction(SproulTown, 7,1,4,4); // Rivals house
-Map.insertObstruction(SproulTown, 4,9,6,4); // Lab
+Map.insertObstruction(1,1,4,4); // Players house
+Map.insertObstruction(7,1,4,4); // Rivals house
+Map.insertObstruction(4,9,6,4); // Lab
 
-Map.insertPerson(SproulTown, 16, 5);
-Map.insertPerson(SproulTown, 18,9);
-Map.insertGate(SproulTown, "Route2", "east",8);
+// Map.insertPerson("La",    16, 5);
+// Map.insertPerson("Drew",  18,9);
+// Map.insertPerson("Ram",   1 ,1);
+// Map.insertPerson("Dean",  18, 1);
+Map.generateCrowd(9);
+Map.insertGate("Route2", "east",8);
 
-Map.initMap(SproulTown, "SproulTown", 0,0);
+Map.initMap("SproulTown", 0,0);

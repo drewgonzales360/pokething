@@ -3,11 +3,11 @@ FileName: main.js
 Kenneth Drew Gonzales
 
 Description:
-Pokemon Hope. This is a videogame using a tile sized map
+This is a videogame using a tile sized map
 and you play one character that moves through the map. The
 player is always shown in the center of the screen.
 
-Last Edited: 8/25/16
+Last Edited: 8/29/16
 ****************************************************************/
 
 // Module to control application life.
@@ -33,18 +33,11 @@ function createWindow () {
     resizable: false
     })
 
-  backgroundProcess = new BrowserWindow({
-    width: 400,
-    height: 300,
-    show: true
-  })
   // and load the index.html of the app.
-  backgroundProcess.loadURL(`file://${__dirname}/app/bgProcess.html`)
   mainWindow.loadURL(`file://${__dirname}/app/htmlmaps/SproulTown.html`)
 
   // Open the DevTools.
   mainWindow.webContents.openDevTools()
-  backgroundProcess.webContents.openDevTools();
 
   // Emitted when the window is closed.
   mainWindow.on('closed', function () {
@@ -52,7 +45,6 @@ function createWindow () {
     // in an array if your app supports multi windows, this is the time
     // when you should delete the corresponding element.
     mainWindow = null
-    backgroundProcess = null
     app.quit();
   })
 }
@@ -79,8 +71,12 @@ app.on('activate', function () {
   }
 })
 
-// In this file you can include the rest of your app's specific main process
-// code. You can also put them in separate files and require them here.
+/****************************************************************
+Main functions
+summary
+  In this file you can include the rest of your app's specific main process
+  code. You can also put them in separate files and require them here.
+****************************************************************/
 var lastMap = "Route2"
 ipc.on('last-map-request', function(event){
     event.returnValue = lastMap;
@@ -90,10 +86,73 @@ ipc.on('memorize-last-map', function(event, lMap){
   event.returnValue = lastMap;
 })
 
-ipc.on('npc-update', function (event, map, people) {
-  backgroundProcess.webContents.send('npc-update', people);
-})
 
-ipc.on('updated-npc', function(event, people) {
+ipc.on('npc-update', function (event, map, people) {
+  for (var indi in people) {
+    console.log(indi);
+    findOneDirection(map, people[indi]);
+  }
   mainWindow.webContents.send('updated-npc', people);
 });
+
+
+function findOneDirection(map, person) {
+
+    let feasibleDirections = [];
+    if (map[person[0]][person[1]-1] === 1 ) {  // north
+        feasibleDirections.push("north");
+    }
+    if (map[person[0]-1][person[1]] === 1 ) {   // east
+        feasibleDirections.push("east");
+    }
+    if (map[person[0]][person[1]+1] === 1) {   // south
+        feasibleDirections.push("south");
+    }
+    if (map[person[0]+1][person[1]] === 1) {   // west
+        feasibleDirections.push("west");
+    }
+    console.log(feasibleDirections);
+    var directionNotFound = true;
+    while ( directionNotFound ) {
+        let direction = Math.floor(Math.random()*4);
+        switch (direction) {
+            case 1: // can i go north
+            if (include(feasibleDirections, "north")) {
+                person[1] -= 1
+                directionNotFound = false;
+            }
+            break;
+            case 2:
+            if (include(feasibleDirections, "east")) {
+                person[0] -= 1
+                directionNotFound = false;
+            }
+            break;
+            case 3:
+            if (include(feasibleDirections, "south")) {
+                person[1] += 1
+                directionNotFound = false;
+            }
+            break;
+            case 4:
+            if (include(feasibleDirections, "west")) {
+                person[0] += 1
+                directionNotFound = false;
+            }
+            break;
+            default:
+        }
+    }
+
+}
+
+
+
+function include(array, value) {
+  for (var i = 0; i < array.length; i++) {
+    if (array[i] === value) {
+      return true;
+    }
+  }
+  return false;
+}

@@ -10,13 +10,14 @@ Last Edited: 8/25/16
 ****************************************************************/
 var Map = require('../map');
 
-var Route42 = Map.generateMap(27,30);
+Map.generateMap(27,30);
 
 // Big block in the bottom right.
-Map.insertObstruction(Route42, 7,7,20,23);
-Map.insertObstruction(Route42, 0,0,2,1);
-Map.insertObstruction(Route42, 0, 12,1,12);
+Map.insertObstruction(7,7,20,23);
+Map.insertObstruction(0,0,2,1);
+Map.insertObstruction(0, 12,1,12);
+Map.generateCrowd(9);
 
-Map.insertGate(Route42, "Ikea", "east", 3);
-Map.insertGate(Route42, "Tagatai", "south", 3);
-Map.initMap(Route42, "Route42", 26,2);
+Map.insertGate("Ikea", "east", 3);
+Map.insertGate("Tagatai", "south", 3);
+Map.initMap("Route42", 26,2);
