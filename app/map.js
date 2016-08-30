@@ -37,7 +37,8 @@ const TILE_SIZE   = 50;
 const VIEW_WIDTH  = 16;
 const VIEW_HEIGHT = 12;
 
-var gates = {}; // hashmap for quickly finding gates.
+var people = {};        // hashmap for quickly finding people. 
+var gates = {};         // hashmap for quickly finding gates.
 module.exports  = {
   /****************************************************************
   generateMap
@@ -114,23 +115,17 @@ module.exports  = {
     return map
   },
 
-  insertPerson: function( map, loc_x, loc_y ){
+  /****************************************************************
+  
+  ****************************************************************/
+  insertPerson: function( map, name, loc_x, loc_y ){
+    people[name] = [loc_x, loc_y];
     loc_x += VIEW_WIDTH/2;
     loc_y += VIEW_HEIGHT/2;
     if( map[loc_x][loc_y] === -1){
       console.log("Out of bounds error.");
     }
-    map[loc_x][loc_y] = -3 // code for npc.
-    setInterval(function(){
-      ipc.send('npc-update', map, loc_x, loc_y);
-      ipc.on('updated-npc', function(event, x, y) {
-        map[loc_x][loc_y] = 1; // code for grass.
-        loc_x = x
-        loc_y = y
-        map[loc_x][loc_y] = -3; // code for npc
-      });
-
-    }, 3000)
+    map[loc_x][loc_y] = -3; // code for npc
   },
   /****************************************************************
   initMap
@@ -150,8 +145,9 @@ module.exports  = {
     var matX = mapX + VIEW_WIDTH/2  // don't touch
     var matY = mapY + VIEW_HEIGHT/2 // don't touch
 
-    drawViewport(townMap, mapX, mapY);
-    drawTile( VIEW_WIDTH/2, VIEW_HEIGHT/2,"player");
+    drawViewport(townMap, mapX, mapY); // not sure if i need this. 
+    
+    moveAllPeople(townMap);
 
     setInterval(function () {
       drawViewport(townMap, mapX, mapY);
@@ -349,4 +345,19 @@ function include(array, value) {
     }
   }
   return false;
+}
+
+function moveAllPeople(map) {
+    setInterval(function(){
+        ipc.send('npc-update', map, people);
+        ipc.on('updated-npc', function(event, peeps) {
+            for (var indi in people) {      // erase where the old people were
+                map[indi[0]][indi[1]] = 1 
+            }
+            for (var indi in peeps) {
+                map[indi[0]][indi[1]] = -3; // code for grass.
+            }
+            people = peeps;
+      });      
+  }, 3000);
 }

@@ -90,10 +90,10 @@ ipc.on('memorize-last-map', function(event, lMap){
   event.returnValue = lastMap;
 })
 
-ipc.on('npc-update', function (event, map, loc_x, loc_y) {
-  backgroundProcess.webContents.send('npc-update', map, loc_x, loc_y);
+ipc.on('npc-update', function (event, map, people) {
+  backgroundProcess.webContents.send('npc-update', people);
 })
 
-ipc.on('updated-npc', function(event, x, y) {
-  mainWindow.webContents.send('updated-npc', x, y);
+ipc.on('updated-npc', function(event, people) {
+  mainWindow.webContents.send('updated-npc', people);
 });
