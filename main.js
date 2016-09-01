@@ -77,6 +77,11 @@ summary
   In this file you can include the rest of your app's specific main process
   code. You can also put them in separate files and require them here.
 ****************************************************************/
+
+/****************************************************************
+For switching maps. Gotta remember the gate we're coming from 
+when a new map is loaded. 
+****************************************************************/
 var lastMap = "Route2"
 ipc.on('last-map-request', function(event){
     event.returnValue = lastMap;
@@ -86,18 +91,24 @@ ipc.on('memorize-last-map', function(event, lMap){
   event.returnValue = lastMap;
 })
 
-
+/****************************************************************
+For moving all npc characters. This will randomly generate a 
+direction for an npc character to move. If the npc is in
+conversation, the character will not move. 
+****************************************************************/
 ipc.on('npc-update', function (event, map, people) {
   for (var indi in people) {
     console.log(indi);
-    findOneDirection(map, people[indi]);
+    // if the npc is being talked to, don't move
+    if (people[indi][2]) {
+        findOneDirection(map, people[indi]);
+    }
   }
   mainWindow.webContents.send('updated-npc', people);
 });
 
 
 function findOneDirection(map, person) {
-
     let feasibleDirections = [];
     if (map[person[0]][person[1]-1] === 1 ) {  // north
         feasibleDirections.push("north");
@@ -143,10 +154,7 @@ function findOneDirection(map, person) {
             default:
         }
     }
-
 }
-
-
 
 function include(array, value) {
   for (var i = 0; i < array.length; i++) {
@@ -156,3 +164,5 @@ function include(array, value) {
   }
   return false;
 }
+
+

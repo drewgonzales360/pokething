@@ -17,4 +17,4 @@ Map.generateCrowd(9);
 
 Map.insertGate("Route7", "north", 8);
 Map.insertGate("Route42", "west", 16);
-Map.initMap("Ikea",0,7);
+Map.initMap("Ikea");

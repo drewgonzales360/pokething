@@ -20,4 +20,4 @@ Map.generateCrowd(9);
 
 Map.insertGate("Route2", "north", 5);
 Map.insertGate("Route7", "east", 18);
-Map.initMap("Lagunta",0,4);
+Map.initMap("Lagunta");

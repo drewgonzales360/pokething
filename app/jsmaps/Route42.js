@@ -20,4 +20,4 @@ Map.generateCrowd(9);
 
 Map.insertGate("Ikea", "east", 3);
 Map.insertGate("Tagatai", "south", 3);
-Map.initMap("Route42", 26,2);
+Map.initMap("Route42");

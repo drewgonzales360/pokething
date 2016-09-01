@@ -29,4 +29,4 @@ Map.insertObstruction(99,99,1,1);
 Map.insertGate("SproulTown", "west", 0);
 Map.insertGate("Lagunta", "south", 95);
 
-Map.initMap("Route2", 0,65);
+Map.initMap("Route2");

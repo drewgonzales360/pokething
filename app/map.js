@@ -29,6 +29,7 @@ const canvas      = document.getElementById("map");
 const ctx         = canvas.getContext("2d");
 const key         = require('key-emit')(document);
 const ipc         = require('electron').ipcRenderer;
+const convo       = require('./conversation.js');
 
 ctx.canvas.width  = window.innerWidth;
 ctx.canvas.height = window.innerHeight;
@@ -42,8 +43,10 @@ var mapHeight     = 0;
 var currentMap    = [];    // global variable for map the player sees.
 var people        = {};        // hashmap for quickly finding people.
 var gates         = {};         // hashmap for quickly finding gates.
-
-
+var mapX          = 0;
+var mapY          = 0;
+var chatOn        = false;
+var dOfInteract   = [];
 module.exports  = {
   /****************************************************************
   generateMap
@@ -54,13 +57,13 @@ module.exports  = {
     go to the edge of the map.
   ****************************************************************/
   generateMap: function(width, height) {
-    mapWidth = width;
-    mapHeight = height;
-    width += VIEW_WIDTH;
-    height += VIEW_HEIGHT;
-    var map = []
+    mapWidth    = width;
+    mapHeight   = height;
+    width       += VIEW_WIDTH;
+    height      += VIEW_HEIGHT;
+    let map     = []
     for (var x = 0; x < width; x++) {
-      var col = [];
+      let col = [];
       for(var y = 0; y < height; y++){
         if( x < VIEW_WIDTH/2 || x >= width - VIEW_WIDTH/2 ||
             y < VIEW_HEIGHT/2 || y >= height - VIEW_HEIGHT/2){
@@ -126,7 +129,6 @@ module.exports  = {
   summary
     Creates a new person in a given map who will roam the allowed
     area randomly. The direction chosen at random is from Math.random.
-
   ****************************************************************/
   // insertPerson: function(name, loc_x, loc_y ){
   //   loc_x += VIEW_WIDTH/2;
@@ -139,6 +141,13 @@ module.exports  = {
   //   currentMap[loc_x][loc_y] = -3; // code for npc
   // },
 
+  /****************************************************************
+  generateCrowd
+  summary
+    This generates a bunch of npc players that wander around the
+    map. Known bugs: after a long time, all npcs will move toward
+    the left side of the map, then just go up and down a little.
+  ****************************************************************/
   generateCrowd: function(crowdCount) {
     for(var i = 0; i < crowdCount; i++){
       let x = Math.floor(Math.random()*mapWidth) + VIEW_WIDTH/2;
@@ -147,7 +156,7 @@ module.exports  = {
         x = Math.floor(Math.random()*mapWidth) + VIEW_WIDTH/2;
         y = Math.floor(Math.random()*mapHeight) + VIEW_HEIGHT/2;
       }
-      insertPerson("Crowd " + i, x - VIEW_WIDTH/2, y - VIEW_HEIGHT/2);
+      insertPerson("@Crowd "+ i, x - VIEW_WIDTH/2, y - VIEW_HEIGHT/2);
     }
   },
 
@@ -155,19 +164,16 @@ module.exports  = {
   initMap
   summary
     Creates and initilizes the walking feature of the game.
-
-  TODO: add functionality for switching maps.
   ****************************************************************/
-  initMap: function( thisMap, mapX, mapY){
+  initMap: function( thisMap ){
     console.assert( typeof thisMap === "string");
-    var startingGate = ipc.sendSync('last-map-request');
+    let startingGate = ipc.sendSync('last-map-request');
     console.log(startingGate);
     let start = setStartingLocation(gates[startingGate])
     mapX = start[0]-VIEW_WIDTH/2;
     mapY = start[1]-VIEW_HEIGHT/2;
-    var direction = "south";
-    var matX = mapX + VIEW_WIDTH/2  // don't touch
-    var matY = mapY + VIEW_HEIGHT/2 // don't touch
+    let matX = mapX + VIEW_WIDTH/2  // don't touch
+    let matY = mapY + VIEW_HEIGHT/2 // don't touch
 
     drawViewport(mapX, mapY); // not sure if i need this.
 
@@ -175,18 +181,25 @@ module.exports  = {
 
     setInterval(function () {
       drawViewport(mapX, mapY);
+      if (chatOn) {
+        drawChat(currentMap[dOfInteract[0]][dOfInteract[1]]);
+      }
     }, 500);
+    
     key.pressed.on("w", function(key_event) {
-      direction = "north";
+      if (chatOn) {
+        return;
+      }
       if ( typeof currentMap[matX][matY-1] === "string") {
-        loadMap(currentMap[matX][matY-1], thisMap)
+        if ( currentMap[matX][matY-1].charAt(0) === "@") {
+            return;
+        } else {
+            loadMap(currentMap[matX][matY-1], thisMap)
+        }
       }
       switch (currentMap[matX][matY-1]) {
         case -1:
           console.log("Border hit.");
-          break;
-        case -3: // NPC hit
-          console.log("NPC hit.");
           break;
         default:
           mapY -= 1;
@@ -197,16 +210,19 @@ module.exports  = {
     });
 
     key.pressed.on("s", function(key_event) {
-      direction = "south";
+      if (chatOn) {
+        return;
+      }
       if ( typeof currentMap[matX][matY+1] === "string") {
-        loadMap(currentMap[matX][matY+1], thisMap)
+        if ( currentMap[matX][matY+1].charAt(0) === "@") {
+            return;
+        } else {
+            loadMap(currentMap[matX][matY+1], thisMap)
+        }
       }
       switch (currentMap[matX][matY+1]) {
         case -1:
           console.log("Border hit.");
-          break;
-        case -3: // NPC hit
-          console.log("NPC hit.");
           break;
         default:
           mapY += 1
@@ -216,16 +232,19 @@ module.exports  = {
     });
 
     key.pressed.on("a", function(key_event) {
-      direction = "west";
+      if (chatOn) {
+        return;
+      }
       if ( typeof currentMap[matX-1][matY] === "string") {
-        loadMap(currentMap[matX-1][matY], thisMap);
+        if ( currentMap[matX-1][matY].charAt(0) === "@") {
+            return;
+        } else {
+            loadMap(currentMap[matX-1][matY], thisMap);
+        }
       }
       switch (currentMap[matX-1][matY]) {
         case -1:
           console.log("Border hit.");
-          break;
-        case -3: // NPC hit
-          console.log("NPC hit.");
           break;
         default:
           mapX -= 1;
@@ -235,16 +254,19 @@ module.exports  = {
     });
 
     key.pressed.on("d", function(key_event) {
-      direction = "east";
+      if (chatOn) {
+        return;
+      }
       if (typeof currentMap[matX+1][matY] === "string") {
-        loadMap(currentMap[matX+1][matY], thisMap);
+        if ( currentMap[matX+1][matY].charAt(0) === "@") {
+            return;
+        } else {
+            loadMap(currentMap[matX+1][matY], thisMap);
+        }
       }
       switch (currentMap[matX+1][matY]) {
         case -1:
           console.log("Border hit.");
-          break;
-        case -3: // NPC hit
-          console.log("NPC hit.");
           break;
         default:
           mapX += 1;
@@ -254,9 +276,6 @@ module.exports  = {
     });
   }
 }
-
-
-
 
 /****************************************************************
 drawTile
@@ -274,12 +293,17 @@ function drawTile( view_x, view_y, fillStyle ) {
     return;
   }
   if ( typeof fillStyle === "string") {
-    switch (fillStyle) {
-      case "player":
-        ctx.fillStyle = "bisque";
-        break;
-      default:
-        ctx.fillStyle = "gray"
+    if ( fillStyle.charAt(0) === "@") {
+      ctx.fillStyle = "burlywood"
+    } else {
+      
+        switch (fillStyle) {
+            case "player":
+            ctx.fillStyle = "bisque";
+            break;
+            default:
+            ctx.fillStyle = "gray"
+        }
     }
   } else {
     switch(fillStyle) {
@@ -291,9 +315,6 @@ function drawTile( view_x, view_y, fillStyle ) {
         break;
       case -1:
         ctx.fillStyle = "black"
-        break;
-      case -3: // NPC hit
-        ctx.fillStyle = "burlywood"
         break;
       default:
         ctx.fillStyle = "red"
@@ -361,16 +382,6 @@ summary
   values, actual values in the matrix, not locations in the map.
   Call this function ever two seconds or so.
 ****************************************************************/
-
-function include(array, value) {
-  for (var i = 0; i < array.length; i++) {
-    if (array[i] === value) {
-      return true;
-    }
-  }
-  return false;
-}
-
 function moveAllPeople() {
   setInterval(function(){
     ipc.send('npc-update', currentMap, people);
@@ -382,7 +393,7 @@ function moveAllPeople() {
 ipc.on('updated-npc', function(event,  peeps) {
   for (var indi in peeps) {
     currentMap[people[indi][0]][people[indi][1]] = 1
-    currentMap[peeps[indi][0]][peeps[indi][1]] = -3; // code for grass.
+    currentMap[peeps[indi][0]][peeps[indi][1]] = indi; // code for grass.
   }
   people = peeps;
 });
@@ -390,10 +401,77 @@ ipc.on('updated-npc', function(event,  peeps) {
 function insertPerson(name, loc_x, loc_y ){
   loc_x += VIEW_WIDTH/2;
   loc_y += VIEW_HEIGHT/2;
-  people[name] = [loc_x, loc_y];
+  people[name] = [loc_x, loc_y, true]; // all people start as moving.
   if( currentMap[loc_x][loc_y] === -1){
     console.log("Out of bounds error.");
     return;
   }
-  currentMap[loc_x][loc_y] = -3; // code for npc
+  currentMap[loc_x][loc_y] = name; // code for npc
 }
+
+key.pressed.on("k", function(key_event){
+    let matX = mapX + VIEW_WIDTH/2  // don't touch
+    let matY = mapY + VIEW_HEIGHT/2 // don't touch
+    // Is anyone near me?
+    if ( typeof currentMap[matX][matY+1] === "string" 
+            && currentMap[matX][matY+1].charAt(0) == "@" ) {
+        drawChat(currentMap[matX][matY+1]);
+        people[currentMap[matX][matY+1]][2] = false;
+        dOfInteract = [matX, matY+1]
+    }
+    if ( typeof currentMap[matX][matY-1] === "string" 
+            && currentMap[matX][matY-1].charAt(0) == "@") {
+        drawChat(currentMap[matX][matY-1]);
+        people[currentMap[matX][matY-1]][2] = false;
+        dOfInteract = [matX, matY-1]
+    }
+    if ( typeof currentMap[matX+1][matY] === "string" 
+            && currentMap[matX+1][matY].charAt(0) == "@") {
+        drawChat(currentMap[matX+1][matY]);
+        people[currentMap[matX+1][matY]][2] = false;
+        dOfInteract = [matX+1, matY]
+    }
+    if ( typeof currentMap[matX-1][matY] === "string" 
+            && currentMap[matX-1][matY].charAt(0) == "@") {
+        drawChat(currentMap[matX-1][matY]);
+        people[currentMap[matX-1][matY]][2] = false;
+        dOfInteract = [matX-1, matY]
+    }
+});
+
+key.pressed.on("n", function(key_event){
+    chatOn = false;
+    // tell the npc they can start walking again.
+    people[currentMap[dOfInteract[0]][dOfInteract[1]]][2] = true;
+    drawViewport()
+})
+
+// drawChats 
+function drawChat(npc) {
+    console.log(typeof npc === "string")
+    chatOn = true;
+    let leftBorder = 3
+    let bottomBorder = 640;
+    let topBorder = 530;
+    let rightBorder = 830;
+    
+    ctx.beginPath();
+    
+    ctx.moveTo(30,640);
+    ctx.quadraticCurveTo(20,640,20,630);
+    ctx.lineTo(20,540);
+    
+    ctx.quadraticCurveTo(20, 530,30, 530)          // top left corner
+    ctx.lineTo(820, topBorder);                        // top border
+    ctx.quadraticCurveTo(830,  530, 830, 540);   // top right corner
+    ctx.lineTo(rightBorder, 630);                       // left border
+    ctx.quadraticCurveTo(rightBorder, bottomBorder, 820, bottomBorder);   // bottom right corner
+    ctx.closePath();
+    ctx.fillStyle = "white";
+    ctx.fill();
+    
+    ctx.font = "30px Comic Sans MS";
+    ctx.fillStyle = "black";
+    ctx.fillText(convo.conversation(npc), 25, 570); 
+}
+

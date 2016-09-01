@@ -19,4 +19,4 @@ Map.generateCrowd(9);
 Map.insertGate("Route42", "north", 5);
 // Map.insertGate("Route31", "east", 6);
 // Map.insertGate("Route9", "south", 12)
-Map.initMap("Tagatai",0,4);
+Map.initMap("Tagatai");

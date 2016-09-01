@@ -21,4 +21,4 @@ Map.insertObstruction(4,9,6,4); // Lab
 Map.generateCrowd(9);
 Map.insertGate("Route2", "east",8);
 
-Map.initMap("SproulTown", 0,0);
+Map.initMap("SproulTown");
