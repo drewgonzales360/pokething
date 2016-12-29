@@ -10,7 +10,7 @@ different 'map.' A map is a set of coordinates that is readily
 accessable to the player without going through a 'gate'.
 
 The 'gates' allow users to visit different maps.
-
+![alt tag](https://cloud.githubusercontent.com/assets/6912711/21553278/7632b4b2-cdbc-11e6-9964-d7b2d671e213.png)
 ## Installation
 
 Open a unix terminal, change directories until you're in the same directory
